@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Internal System Notification</title>
+    <style>
+        :root {
+            --charcoal: #1a1d29;
+            --slate: #2d3448;
+            --muted-blue: #3a4a6d;
+            --steel: #7c8aa4;
+            --light-steel: #a6b1c8;
+            --accent: #4a90e2;
+            --success: #34c759;
+            --warning: #ff9500;
+            --border: #3a4560;
+            --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background: var(--charcoal);
+            color: var(--light-steel);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            line-height: 1.5;
+        }
+
+        .screen {
+            background: linear-gradient(165deg, var(--slate) 0%, #262c3d 100%);
+            border-radius: 16px;
+            padding: 60px 50px;
+            width: 100%;
+            max-width: 800px;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            display: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .corner-logo {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            color: var(--steel);
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+
+        .header {
+            margin-bottom: 40px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .email-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .email-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--muted-blue);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+
+        .email-info {
+            flex: 1;
+        }
+
+        .email-subject {
+            font-size: 24px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 6px;
+        }
+
+        .email-meta {
+            font-size: 14px;
+            color: var(--steel);
+            display: flex;
+            gap: 20px;
+        }
+
+        .content {
+            font-size: 17px;
+            color: var(--light-steel);
+            line-height: 1.6;
+            margin-bottom: 40px;
+        }
+
+        .portal-screen {
+            text-align: center;
+        }
+
+        .portal-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--muted-blue), var(--accent));
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            color: white;
+            font-size: 32px;
+        }
+
+        .portal-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .portal-subtitle {
+            font-size: 16px;
+            color: var(--steel);
+            margin-bottom: 50px;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .message-screen {
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        .message {
+            font-size: 22px;
+            color: white;
+            margin-bottom: 60px;
+            font-weight: 500;
+            line-height: 1.4;
+            min-height: 66px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .options {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-top: 40px;
+            position: relative;
+            min-height: 120px;
+        }
+
+        .btn {
+            padding: 18px 40px;
+            font-size: 17px;
+            font-weight: 600;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            min-width: 160px;
+            letter-spacing: 0.3px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #2a78d6);
+            color: white;
+            box-shadow: 0 8px 24px rgba(74, 144, 226, 0.25);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(74, 144, 226, 0.35);
+        }
+
+        .btn-secondary {
+            background: var(--slate);
+            color: var(--steel);
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        .btn-secondary:hover {
+            background: #363e54;
+        }
+
+        .btn-secondary.moving {
+            position: absolute;
+            pointer-events: none;
+            transition: none;
+        }
+
+        .progress {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 60px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border);
+            transition: var(--transition);
+        }
+
+        .dot.active {
+            background: var(--accent);
+            transform: scale(1.2);
+        }
+
+        .final-reveal {
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        .final-icon {
+            font-size: 64px;
+            margin-bottom: 30px;
+            display: inline-block;
+            animation: subtleFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes subtleFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .final-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #fff 30%, var(--light-steel));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .final-message {
+            font-size: 20px;
+            color: var(--light-steel);
+            max-width: 500px;
+            margin: 0 auto 40px;
+            line-height: 1.5;
+        }
+
+        .signature {
+            font-size: 18px;
+            color: var(--steel);
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid var(--border);
+        }
+
+        .signature strong {
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Dodge animation */
+        @keyframes dodgeRight {
+            0% { transform: translateX(0) rotate(0); }
+            25% { transform: translateX(-30px) rotate(-5deg); }
+            50% { transform: translateX(60px) rotate(5deg); }
+            75% { transform: translateX(-20px) rotate(-3deg); }
+            100% { transform: translateX(100px) rotate(0); }
+        }
+
+        @keyframes dodgeLeft {
+            0% { transform: translateX(0) rotate(0); }
+            25% { transform: translateX(30px) rotate(5deg); }
+            50% { transform: translateX(-60px) rotate(-5deg); }
+            75% { transform: translateX(20px) rotate(3deg); }
+            100% { transform: translateX(-100px) rotate(0); }
+        }
+
+        @keyframes swapWithPrimary {
+            0% { transform: translateX(0); }
+            50% { transform: translateX(calc(var(--swap-distance) * -1)); }
+            100% { transform: translateX(calc(var(--swap-distance) * -1)); }
+        }
+
+        @keyframes swapPrimary {
+            0% { transform: translateX(0); }
+            50% { transform: translateX(var(--swap-distance)); }
+            100% { transform: translateX(var(--swap-distance)); }
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 15px; }
+            .screen { padding: 40px 25px; }
+            .corner-logo { top: 20px; right: 20px; }
+            .email-subject { font-size: 22px; }
+            .portal-title { font-size: 24px; }
+            .message { font-size: 20px; }
+            .final-title { font-size: 28px; }
+            .options { flex-direction: column; align-items: center; gap: 15px; }
+            .btn { width: 100%; max-width: 280px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Screen 1: Corporate Email -->
+    <div class="screen active" id="screen1">
+        <div class="corner-logo">SECURE • INTERNAL</div>
+        <div class="header">
+            <div class="email-header">
+                <div class="email-icon">📧</div>
+                <div class="email-info">
+                    <div class="email-subject">Global Training Course</div>
+                    <div class="email-meta">
+                        <span>From: Global IT Operations</span>
+                        <span>To: All System Users</span>
+                        <span>Time: 00:47 UTC</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="content">
+            <p>From SONA COLLEGE OF TECHNOLOGY.</p>
+            <br>
+            <p>All students of sona college of technology must register for this Global Training Course(GTC) for placement training.</p>
+            <br>
+            <p>Please use your college email(name.24cse@sonatech.ac.in) for registration and verify your email with OTP.</p>
+        </div>
+        <div class="options">
+            <button class="btn btn-primary" onclick="nextScreen()">Register for GTC</button>
+        </div>
+    </div>
+
+    <!-- Screen 2: Portal Access -->
+    <div class="screen" id="screen2">
+        <div class="corner-logo">VERIFICATION PORTAL</div>
+        <div class="portal-screen">
+            <div class="portal-icon">🔐</div>
+            <div class="portal-title">Identity Verification Required</div>
+            <div class="portal-subtitle">Please confirm your email to continue registration (rumeshbalaji.24cse@sonatech.ac.in).</div>
+            <div class="options">
+                <button class="btn btn-primary" onclick="nextScreen()">Proceed to Verification</button>
+            </div>
+        </div>
+        <div class="progress">
+            <div class="dot active"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+    </div>
+
+    <!-- Screen 3-8: One-by-one messages -->
+    <div class="screen" id="screen3">
+        <div class="corner-logo">VERIFICATION STEP 1/6</div>
+        <div class="message-screen">
+            <div class="message">Today(8/2/2026) is marked in my calendar.</div>
+            <div class="options">
+                <button class="btn btn-primary" onclick="nextScreen()">Acknowledge</button>
+                <button class="btn btn-secondary" id="noBtn3" onmouseover="dodgeButton(this)">Ignore</button>
+            </div>
+        </div>
+        <div class="progress">
+            <div class="dot"></div>
+            <div class="dot active"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+    </div>
+
+    <div class="screen" id="screen4">
+        <div class="corner-logo">VERIFICATION STEP 2/6</div>
+        <div class="message-screen">
+            <div class="message">it's your birthday balaji bajjiiii! </div>
+            <div class="options">
+                <button class="btn btn-primary" onclick="nextScreen()">yesss!</button>
+                <button class="btn btn-secondary" id="noBtn4" onmouseover="dodgeButton(this)">yaaru nee?</button>
+            </div>
+        </div>
+        <div class="progress">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot active"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+    </div>
+
+    <div class="screen" id="screen5">
+        <div class="corner-logo">VERIFICATION STEP 3/6</div>
+        <div class="message-screen">
+            <div class="message">namma rendu perum dailyum sanda poduvoma?</div>
+            <div class="options">
+                <button class="btn btn-primary" onclick="nextScreen()">ama!</button>
+                <button class="btn btn-secondary" id="noBtn5" onmouseover="dodgeButton(this)">ila</button>
+            </div>
+        </div>
+        <div class="progress">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot active"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+    </div>
+
+    <div class="screen" id="screen6">
+        <div class="corner-logo">VERIFICATION STEP 4/6</div>
+        <div class="message-screen">
+            <div class="message">Unnaku naan best friend aah?</div>
+            <div class="options">
+                <button class="btn btn-primary" onclick="nextScreen()">Ama!</button>
+                <button class="btn btn-secondary" id="noBtn6" onmouseover="dodgeButton(this)">Ila</button>
+            </div>
+        </div>
+        <div class="progress">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot active"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+    </div>
+
+    <div class="screen" id="screen7">
+        <div class="corner-logo">VERIFICATION STEP 5/6</div>
+        <div class="message-screen">
+            <div class="message">Nee ennaku romba special person aah? </div>
+            <div class="options">
+                <button class="btn btn-primary" onclick="nextScreen()">Obviously yess!</button>
+                <button class="btn btn-secondary" id="noBtn7" onmouseover="dodgeButton(this)">Nooo!</button>
+            </div>
+        </div>
+        <div class="progress">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot active"></div>
+            <div class="dot"></div>
+        </div>
+    </div>
+
+    <div class="screen" id="screen8">
+        <div class="corner-logo">VERIFICATION STEP 6/6</div>
+        <div class="message-screen">
+            <div class="message">Nee romba kadupu ethuva!</div>
+            <div class="options">
+                <button class="btn btn-primary" onclick="nextScreen()">Yess!</button>
+                <button class="btn btn-secondary" id="noBtn8" onmouseover="swapWithPrimary(this)">Nooo!</button>
+            </div>
+        </div>
+        <div class="progress">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot active"></div>
+        </div>
+    </div>
+
+    <!-- Final Screen: Reveal -->
+    <div class="screen" id="screen9">
+        <div class="corner-logo">MESSAGE • PERSONAL</div>
+        <div class="final-reveal">
+            <div class="final-icon">🎯</div>
+            <div class="final-title">For my best friend Rumesh</div>
+            <div class="final-message">
+                Nee en life la vanthathu romba unexpected aana romba important aah maariduchi...<br>
+                Ithu unnakaagave naan pannen.
+                <br><br>
+                Forever grateful to have a friend like you.<br>
+                Nee oru mentalll.<br>
+                This day is also special for me.
+                <br><br>
+                Enjoy your special dayyy! .
+            </div>
+            <div class="options">
+                <button class="btn btn-primary" onclick="showFinalMessage()">Apdiyaaaa!</button>
+            </div>
+            <div class="signature">
+                By your bestfriend <strong>Sandhiya</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- Very Final Screen -->
+    <div class="screen" id="screen10">
+        <div class="corner-logo">COMPLETE</div>
+        <div class="final-reveal">
+            <div class="final-icon">✨</div>
+            <div class="final-title">Happiest Birthday panni moonjii!!!!</div>
+            <div class="final-message">
+                Balaji Bajjiiiii.<br>
+                Happy 19th year in this wonderful world.
+                <br><br>
+                TREAT should be given(important).<br>
+                !!Friends Forever!!
+                <br><br>
+                Have a good year ahead.
+            </div>
+            <div class="signature">
+                <strong>Tata Byee!</strong>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentScreen = 1;
+        const totalScreens = 10;
+
+        function nextScreen() {
+            document.getElementById(`screen${currentScreen}`).classList.remove('active');
+            currentScreen++;
+            document.getElementById(`screen${currentScreen}`).classList.add('active');
+            updateProgress();
+        }
+
+        function updateProgress() {
+            document.querySelectorAll('.progress .dot').forEach((dot, index) => {
+                dot.classList.toggle('active', index < currentScreen - 1);
+            });
+        }
+
+        function dodgeButton(button) {
+            if (button.classList.contains('moving')) return;
+            
+            button.classList.add('moving');
+            const direction = Math.random() > 0.5 ? 'dodgeRight' : 'dodgeLeft';
+            button.style.animation = `${direction} 0.8s forwards`;
+            
+            setTimeout(() => {
+                button.style.animation = '';
+                button.classList.remove('moving');
+                // Move button to random position within container
+                const container = button.parentElement;
+                const containerRect = container.getBoundingClientRect();
+                const buttonRect = button.getBoundingClientRect();
+                
+                const maxX = containerRect.width - buttonRect.width;
+                const maxY = containerRect.height - buttonRect.height;
+                
+                const randomX = Math.random() * maxX;
+                const randomY = Math.random() * maxY;
+                
+                button.style.position = 'absolute';
+                button.style.left = `${randomX}px`;
+                button.style.top = `${randomY}px`;
+            }, 800);
+        }
+
+        function swapWithPrimary(button) {
+            if (button.classList.contains('moving')) return;
+            
+            const container = button.parentElement;
+            const primaryBtn = container.querySelector('.btn-primary');
+            const secondaryBtn = button;
+            
+            // Calculate distance between buttons
+            const primaryRect = primaryBtn.getBoundingClientRect();
+            const secondaryRect = secondaryBtn.getBoundingClientRect();
+            const swapDistance = Math.abs(primaryRect.left - secondaryRect.left);
+            
+            // Set CSS variable for animation
+            container.style.setProperty('--swap-distance', `${swapDistance}px`);
+            
+            // Add moving class to prevent multiple triggers
+            secondaryBtn.classList.add('moving');
+            primaryBtn.style.pointerEvents = 'none';
+            
+            // Animate swap
+            secondaryBtn.style.animation = `swapWithPrimary 0.6s forwards`;
+            primaryBtn.style.animation = `swapPrimary 0.6s forwards`;
+            
+            setTimeout(() => {
+                // Swap positions in DOM
+                if (secondaryBtn.nextElementSibling === primaryBtn) {
+                    container.insertBefore(primaryBtn, secondaryBtn);
+                } else {
+                    container.insertBefore(secondaryBtn, primaryBtn);
+                }
+                
+                // Reset styles
+                secondaryBtn.style.animation = '';
+                primaryBtn.style.animation = '';
+                secondaryBtn.classList.remove('moving');
+                primaryBtn.style.pointerEvents = 'auto';
+                
+                // Trigger primary button click
+                setTimeout(() => {
+                    primaryBtn.click();
+                }, 300);
+            }, 600);
+        }
+
+        function showFinalMessage() {
+            document.getElementById('screen9').classList.remove('active');
+            currentScreen = 10;
+            document.getElementById('screen10').classList.add('active');
+        }
+
+        // Prevent right-click and keyboard shortcuts
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowLeft' || e.key === 'Escape') e.preventDefault();
+        });
+
+        // Add escape key to go forward (hidden feature)
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight' && currentScreen < totalScreens) {
+                nextScreen();
+            }
+        });
+    </script>
+</body>
+</html>
